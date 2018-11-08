@@ -22,6 +22,7 @@ public class DiskPositionalIndex implements Index {
     File vocTable;
     File vocab;
     File postings;
+    File docWeights;
 
     private boolean Found = false;
     
@@ -29,6 +30,7 @@ public class DiskPositionalIndex implements Index {
         this.vocTable = new File(path + "\\Index\\VocabTable.bin");
         this.vocab = new File(path + "\\Index\\vocab.bin");
         this.postings = new File(path + "\\Index\\Postings.bin");
+        this.docWeights = new File(path + "\\Index\\docWeights.bin");
     }
 
     @Override
@@ -160,6 +162,22 @@ public class DiskPositionalIndex implements Index {
     }
     
 
+    public double getL_d(int docId) throws FileNotFoundException, IOException{
+        //System.out.println(docId); 
+        FileInputStream i = new FileInputStream(docWeights);
+        RandomAccessFile ram = new RandomAccessFile(docWeights, "r");
+        long docid = (long) docId;
+        //System.out.println(docid); 
+        ram.seek((docid - 1) * 8);
+        //System.out.println(ram.readDouble());
+        double L_d = ram.readDouble();
+        //System.out.println(L_d); 
+        i.close();
+        ram.close();
+        
+        return L_d; 
+        
+    }
 
     @Override
     public List<String> getVocabulary() {
@@ -232,4 +250,6 @@ public class DiskPositionalIndex implements Index {
         }
         return result;
     }
+    
+    
 }

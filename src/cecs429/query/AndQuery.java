@@ -45,8 +45,8 @@ public class AndQuery implements QueryComponent {
 
         //get postings for first 2 components and check if they are positive or negative
         //p0 = index.getPosting_noPos(mComponents.get(0));
-        p0 = mComponents.get(0).getPostings(index);
-        p1 = mComponents.get(1).getPostings(index);
+        p0 = mComponents.get(0).getPosting_noPositions(index);
+        p1 = mComponents.get(1).getPosting_noPositions(index);
         if (mComponents.get(0).Component() == true && mComponents.get(1).Component() == true) {
             results = merge(p0, p1);
         } else {
@@ -62,7 +62,7 @@ public class AndQuery implements QueryComponent {
         //get next posting and merge it with previous result.
         while (count > 0) {
             List<Posting> p2 = new ArrayList<>();
-            p2 = mComponents.get(k).getPostings(index);
+            p2 = mComponents.get(k).getPosting_noPositions(index);
             if (mComponents.get(k).Component() == true) {
                 results = merge(results, p2);
             } else {
@@ -176,6 +176,11 @@ public class AndQuery implements QueryComponent {
     @Override
     public Boolean Component() {
         return true;
+    }
+
+    @Override
+    public List<Posting> getPosting_noPositions(Index index) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }

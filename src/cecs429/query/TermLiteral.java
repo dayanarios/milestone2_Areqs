@@ -46,9 +46,29 @@ public class TermLiteral implements QueryComponent {
             Logger.getLogger(TermLiteral.class.getName()).log(Level.SEVERE, null, ex);
         }
 
+        return index.getPositional_posting(queries.get(0)); //for hypens only care about first item in queries
+
+    }
+
+    @Override
+    public List<Posting> getPosting_noPositions(Index index) {
+        TokenProcessor processor = new NewTokenProcessor();
+        List<String> queries = new ArrayList();
+
+        try {
+            queries = new ArrayList(processor.processToken(mTerm));
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(TermLiteral.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            Logger.getLogger(TermLiteral.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            Logger.getLogger(TermLiteral.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
         return index.getPosting_noPos(queries.get(0)); //for hypens only care about first item in queries
 
     }
+    
 
     @Override
     public String toString() {
@@ -64,4 +84,6 @@ public class TermLiteral implements QueryComponent {
     public Boolean Component() {
         return true;
     }
+
+
 }

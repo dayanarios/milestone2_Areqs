@@ -168,4 +168,10 @@ public class DirectoryCorpus implements DocumentCorpus {
         return corpus;
     }
     
+    public static DirectoryCorpus loadJsonTextDirectory(Path absolutePath, String fileExtension) {
+        DirectoryCorpus corpus = new DirectoryCorpus(absolutePath);
+        corpus.registerFileDocumentFactory(fileExtension, JsonFileDocument::loadJsonFileDocument);
+        return corpus;
+    }
+    
 }

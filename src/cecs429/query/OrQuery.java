@@ -42,8 +42,8 @@ public class OrQuery implements QueryComponent {
         //number of times we want to perform merge.
         int count = mComponents.size() - 1;
 
-        p0 = mComponents.get(0).getPostings(index);
-        p1 = mComponents.get(1).getPostings(index);
+        p0 = mComponents.get(0).getPosting_noPositions(index);
+        p1 = mComponents.get(1).getPosting_noPositions(index);
 
         results = merge(p0, p1);
         count = count - 1;
@@ -53,7 +53,7 @@ public class OrQuery implements QueryComponent {
 
             List<Posting> p2 = new ArrayList<>();
 
-            p2 = mComponents.get(k).getPostings(index);
+            p2 = mComponents.get(k).getPosting_noPositions(index);
 
             results = merge(results, p2);
             count--;
@@ -142,6 +142,11 @@ public class OrQuery implements QueryComponent {
 
     @Override
     public Boolean Component() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public List<Posting> getPosting_noPositions(Index index) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

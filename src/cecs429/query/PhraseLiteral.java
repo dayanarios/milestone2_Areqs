@@ -21,23 +21,54 @@ import java.util.logging.Logger;
 public class PhraseLiteral implements QueryComponent {
     // The list of individual terms in the phrase.
 
-    private List<String> mTerms = new ArrayList<>();
+    private List<String> string_terms = new ArrayList<>();
+    private int k;
+    private List<QueryComponent> mTerms = new ArrayList<>();
 
+    
     /**
      * Constructs a PhraseLiteral with the given individual phrase terms.
      */
+    
+    /*
+    public PhraseLiteral(List<String> terms, int k) {
+        mTerms.addAll(terms);
+        this.k = k; 
+    }
+    
     public PhraseLiteral(List<String> terms) {
         mTerms.addAll(terms);
+        this.k = 1;
     }
-
+    */
     /**
      * Constructs a PhraseLiteral given a string with one or more individual
      * terms separated by spaces.
      */
-    public PhraseLiteral(String terms) {
-        mTerms.addAll(Arrays.asList(terms.split(" ")));
-
+    
+    public PhraseLiteral(String terms, int k) {
+        List<String> temp = Arrays.asList(terms.split(" "));
+        for(String t: temp){
+            mTerms.add(new TermLiteral(t)); 
+        }
+        
+        this.k = k;
     }
+    
+    
+    public PhraseLiteral(List<QueryComponent> terms) {
+        mTerms.addAll(terms);
+        this.k = 1;
+    }
+    
+        public PhraseLiteral(List<QueryComponent> terms, int k) {
+        mTerms.addAll(terms);
+        this.k = k;
+    }
+
+    
+
+    
 
     /**
      * Constructs a list of postings that contains the phrase literal
@@ -47,6 +78,7 @@ public class PhraseLiteral implements QueryComponent {
      */
     @Override
     public List<Posting> getPostings(Index index) {
+        /*
         TokenProcessor processor = new NewTokenProcessor();
         List<String> queries = new ArrayList();
         List<String> temp;
@@ -65,7 +97,11 @@ public class PhraseLiteral implements QueryComponent {
         } catch (IllegalAccessException ex) {
             Logger.getLogger(TermLiteral.class.getName()).log(Level.SEVERE, null, ex);
         }
+*/
 
+        
+        
+        
         // TODO: program this method. Retrieve the postings for the individual terms in the phrase,
         // and positional merge them together.
         List<Posting> results = new ArrayList<>();
@@ -74,28 +110,30 @@ public class PhraseLiteral implements QueryComponent {
         List<Posting> postings2 = new ArrayList<>();
 
         //number of times we want to perform merge.
-        int count = queries.size() - 1;
+        int count = mTerms.size() - 1;
         int indexQueries = 1;
 
         Boolean firstPass = true;
 
-        if (queries.size() == 1) //only have one term no merge needed
+        if (mTerms.size() == 1) //only have one term no merge needed
         {
-            results = index.getPositional_posting(queries.get(indexQueries - 1)); //index = 0
+            results = mTerms.get(indexQueries - 1).getPostings(index);
         }
 
         while (count > 0) {
 
-            postings1 = index.getPositional_posting(queries.get(indexQueries - 1)); //gets postings for terms
-            postings2 = index.getPositional_posting(queries.get(indexQueries));
+            postings1 = mTerms.get(indexQueries - 1).getPostings(index); //gets postings for terms
+            postings2 = mTerms.get(indexQueries).getPostings(index);
 
-            if (firstPass) {
-                results = merge(postings1, postings2, postings1.size(), postings2.size());
+
+            if (!postings1.isEmpty() && !postings2.isEmpty() && firstPass) {
+                results = merge(postings1, postings2, postings1.size(), postings2.size(), k);
 
                 firstPass = false;
-            } else {
-                results = merge(results, postings2, results.size(), postings2.size());
+            } else if (!postings1.isEmpty() && !postings2.isEmpty()) {
+                results = merge(results, postings2, results.size(), postings2.size(), k);
             }
+            
 
             indexQueries++;
             count--;
@@ -117,7 +155,7 @@ public class PhraseLiteral implements QueryComponent {
      *
      * modified by bhavya
      */
-    public List<Posting> merge(List<Posting> postings1, List<Posting> postings2, int postings1_length, int postings2_length) {
+    public List<Posting> merge(List<Posting> postings1, List<Posting> postings2, int postings1_length, int postings2_length, int k) {
         List<Posting> results = new ArrayList();
         List<Integer> positions1 = new ArrayList();
         List<Integer> positions2 = new ArrayList();
@@ -135,7 +173,7 @@ public class PhraseLiteral implements QueryComponent {
 
             if (postings1.get(index1).getDocumentId() == postings2.get(index2).getDocumentId()) {
                 while (pos1 < positions1.size() && pos2 < positions2.size()) {
-                    if (positions1.get(pos1) + 1 == positions2.get(pos2)) {
+                    if (positions1.get(pos1) + k == positions2.get(pos2)) {
                         //Initial stage, when the result list is empty, simply add the posting with current position instead of all the positions.
                         if (results.isEmpty()) {
                             Posting p = new Posting(postings2.get(index2).getDocumentId(), positions2.get(pos2));
@@ -193,7 +231,7 @@ public class PhraseLiteral implements QueryComponent {
 
     @Override
     public String toString() {
-        return "\"" + String.join(" ", mTerms) + "\"";
+        return  mTerms.toString(); //"\"" + String.join(" ", mTerms) + "\"";
     }
 
     /**
@@ -204,5 +242,10 @@ public class PhraseLiteral implements QueryComponent {
     @Override
     public Boolean Component() {
         return true;
+    }
+
+    @Override
+    public List<Posting> getPosting_noPositions(Index index) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

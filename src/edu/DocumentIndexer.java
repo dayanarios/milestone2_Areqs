@@ -44,7 +44,7 @@ public class DocumentIndexer {
     protected static DocumentCorpus corpus;
     private static Index index;
     protected static String query;
-    protected static List<Posting> postings;
+    protected static List<Posting> postings = new ArrayList<>();
     protected static Boolean clickList = false;  //prevents clicking the list when there is nothing to click
     protected static Boolean booleanMode = true; //indicates which mode the search engine should run in
     protected static Boolean rankedMode = false; 
@@ -62,10 +62,11 @@ public class DocumentIndexer {
      *
      */
     protected static void startIndexing(Path p) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException {
-        //corpus = DirectoryCorpus.loadJsonTextDirectory(path.toAbsolutePath(), ".json");
+        
         path = p.toString();
         
         corpus = DirectoryCorpus.loadTextDirectory(p.toAbsolutePath(), ".txt");// To run .txt files
+        //corpus = DirectoryCorpus.loadJsonTextDirectory(p.toAbsolutePath(), ".json");
         
         long startTime = System.nanoTime();
         index = posindexCorpus(corpus);
@@ -82,7 +83,7 @@ public class DocumentIndexer {
        
         DiskIndexWriter diskWriter= new DiskIndexWriter();
         //diskWriter.WriteIndex(index,path);
-        Index Disk_posIndex = new DiskPositionalIndex(path);
+        DiskPositionalIndex Disk_posIndex = new DiskPositionalIndex(path);
         
         
         if (booleanMode){
@@ -107,14 +108,14 @@ public class DocumentIndexer {
      * @throws InstantiationException
      * @throws IllegalAccessException
      */
-    private static void BooleanQueryMode(DiskIndexWriter diskWriter, Index disk_posIndex) throws ClassNotFoundException, InstantiationException, IllegalAccessException{
+    private static void BooleanQueryMode(DiskIndexWriter diskWriter, DiskPositionalIndex disk_posIndex) throws ClassNotFoundException, InstantiationException, IllegalAccessException{
         if (!specialQueries(query)) {
             //newCorpus = false; 
             BooleanQueryParser bParser = new BooleanQueryParser();
             QueryComponent qComponent = bParser.parseQuery(query);
             postings = qComponent.getPostings(disk_posIndex);
 
-            if (postings.isEmpty()) //might be giving the error
+            if (postings.isEmpty()) 
             {
                 GUI.JListModel.clear();
                 GUI.ResultsLabel.setText("");
@@ -151,7 +152,7 @@ public class DocumentIndexer {
      * Processes a query without any Boolean operators and returns the top 
      * K=10 documents satisfying the query. 
      */
-    private static void RankedQueryMode(DiskIndexWriter diskWriter, Index disk_posIndex) throws IOException{
+    private static void RankedQueryMode(DiskIndexWriter diskWriter, DiskPositionalIndex disk_posIndex) throws IOException{
         
         
         //newCorpus = true;
@@ -200,7 +201,7 @@ public class DocumentIndexer {
 
             if (accum > 0) {
                 //search for each p's Ld factor in docWeights.bin
-                int l_d = 1; //temporary value
+                double l_d = disk_posIndex.getL_d(p.getDocumentId()); 
                 accum /= l_d;
             }
 

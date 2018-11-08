@@ -16,6 +16,8 @@ public interface QueryComponent {
      * the source.
      */
     List<Posting> getPostings(Index index);
+    
+    List<Posting> getPosting_noPositions(Index index);
 
     Boolean Component();
 

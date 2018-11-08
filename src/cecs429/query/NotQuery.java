@@ -26,8 +26,11 @@ public class NotQuery implements QueryComponent {
     public NotQuery(String terms) {
         //Checks if the NOT component is phrase literal or term.
         if (terms.charAt(1) == '"') {
-            mTerms.add(new PhraseLiteral(terms.substring(2)));
+            mTerms.add(new PhraseLiteral(terms.substring(2), 1));
 
+        } else if (terms.charAt(1) == '[') {
+            //call near query to do the work 
+            mTerms.add(new NearLiteral(terms.substring(2)));
         } else {
             mTerms.add(new TermLiteral(terms.substring(1)));
         }
@@ -45,7 +48,7 @@ public class NotQuery implements QueryComponent {
         List<Posting> results = new ArrayList<>();
         List<Posting> p0 = new ArrayList<>();
 
-        p0 = mTerms.get(0).getPostings(index);
+        p0 = mTerms.get(0).getPosting_noPositions(index);
 
         results = p0;
 
@@ -64,6 +67,11 @@ public class NotQuery implements QueryComponent {
     @Override
     public Boolean Component() {
         return false;
+    }
+
+    @Override
+    public List<Posting> getPosting_noPositions(Index index) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }
