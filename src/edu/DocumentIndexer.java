@@ -177,10 +177,14 @@ public class DocumentIndexer {
             postings = disk_posIndex.getPosting_noPos(term);
             for (Posting p : postings) { //for each document in the postings list
                 double t_fd = p.getT_fd(); 
+                //System.out.println("t_fd " + t_fd); 
                 double d_ft = p.getD_ft(); 
+                //System.out.println("d_ft " + d_ft); 
                 double w_qt = log(1 + (N / d_ft));
+                //System.out.println("w_qt " + w_qt); 
                 double accum = 0;
                 double w_dt = 1 + log(t_fd);
+                //System.out.println("w_dt " + w_dt); 
 
                 //pairs (Ranked_posting, accumulator factor)
                 if (postingMap.containsKey(p)) {
@@ -302,11 +306,11 @@ public class DocumentIndexer {
 
                 //we check if token already exists in hashmap or not. 
                 //if it exists, increase its freq by 1 else make a new entry.
-                if (tftd.containsKey(token)) {
-                    int count = tftd.get(token);
-                    tftd.replace(token, count + 1);
+                if (tftd.containsKey(word.get(0))) {
+                    int count = tftd.get(word.get(0));
+                    tftd.replace(word.get(0), count + 1);
                 } else {
-                    tftd.put(token, 1);
+                    tftd.put(word.get(0), 1);
                 }
 
             }
@@ -316,10 +320,12 @@ public class DocumentIndexer {
             for (Map.Entry<String, Integer> entry : tftd.entrySet()) {
 
                 wdt = 1 + log(entry.getValue());
+
                 length = length + pow(wdt, 2);
             }
 
             Doc_length.add(pow(length, 0.5));
+
         }
 
         DiskIndexWriter d = new DiskIndexWriter();

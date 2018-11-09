@@ -168,7 +168,7 @@ public class DiskPositionalIndex implements Index {
         RandomAccessFile ram = new RandomAccessFile(docWeights, "r");
         long docid = (long) docId;
         //System.out.println(docid); 
-        ram.seek((docid - 1) * 8);
+        ram.seek((docid) * 8);
         //System.out.println(ram.readDouble());
         double L_d = ram.readDouble();
         //System.out.println(L_d); 
