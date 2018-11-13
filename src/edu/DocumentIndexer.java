@@ -5,6 +5,8 @@
  */
 package edu;
 
+import Strategy.StrategyFactory;
+import Strategy.StrategyInterface;
 import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
@@ -18,6 +20,7 @@ import cecs429.query.QueryComponent;
 import cecs429.text.EnglishTokenStream;
 import cecs429.text.NewTokenProcessor;
 import cecs429.text.TokenProcessor;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
@@ -51,6 +54,7 @@ public class DocumentIndexer {
     private int topK = 10; //search engine always returns the top K = 10 docs
     private static double N = 0; //corpus size
     private static String path; 
+    protected static int rankedOption = 0; 
     
     
     /**
@@ -153,17 +157,17 @@ public class DocumentIndexer {
      * K=10 documents satisfying the query. 
      */
     private static void RankedQueryMode(DiskIndexWriter diskWriter, DiskPositionalIndex disk_posIndex) throws IOException{
-        
-        
-        //newCorpus = true;
 
         if (query.equals("q")) {
 
             System.exit(0);
         }
         
+        StrategyFactory sf = new StrategyFactory();
+        StrategyInterface strategy = sf.execute(rankedOption);
+        
         //maps postings to accumulator value
-        HashMap<Posting, Doc_accum> postingMap = new HashMap<Posting, Doc_accum>();
+        HashMap<Integer, Doc_accum> postingMap = new HashMap<Integer, Doc_accum>();
 
         PriorityQueue<Doc_accum> queue = new PriorityQueue<>(Collections.reverseOrder());
 
@@ -176,37 +180,43 @@ public class DocumentIndexer {
 
             postings = disk_posIndex.getPosting_noPos(term);
             for (Posting p : postings) { //for each document in the postings list
+                //System.out.println("docID: " + p.getDocumentId());
                 double t_fd = p.getT_fd(); 
                 //System.out.println("t_fd " + t_fd); 
                 double d_ft = p.getD_ft(); 
                 //System.out.println("d_ft " + d_ft); 
-                double w_qt = log(1 + (N / d_ft));
+                double w_qt = strategy.calculate_wqt(N, d_ft);
                 //System.out.println("w_qt " + w_qt); 
                 double accum = 0;
-                double w_dt = 1 + log(t_fd);
+                double w_dt = strategy.get_wdt(t_fd, disk_posIndex, p.getDocumentId());
                 //System.out.println("w_dt " + w_dt); 
 
                 //pairs (Ranked_posting, accumulator factor)
-                if (postingMap.containsKey(p)) {
-                    accum = postingMap.get(p).getAccumulator();
+                if (postingMap.containsKey(p.getDocumentId())) {
+                    accum = postingMap.get(p.getDocumentId()).getAccumulator();
                     accum += (w_qt * w_dt);
-                    postingMap.replace(p, new Doc_accum(p, accum)); //replaces old accum value
+                    postingMap.replace(p.getDocumentId(), new Doc_accum(p, accum)); //replaces old accum value
 
                 } else {
                     accum += (w_qt * w_dt);
-                    postingMap.put(p, new Doc_accum(p, accum));
+                    postingMap.put(p.getDocumentId(), new Doc_accum(p, accum));
                 }
             }
 
         }
 
-        for (Posting p : postingMap.keySet()) {
-            double accum = postingMap.get(p).getAccumulator(); //gets accum associated with doc
+        for (Integer p : postingMap.keySet()) {
+            Doc_accum doc_temp = postingMap.get(p);
+            double accum = doc_temp.getAccumulator(); //gets accum associated with doc
 
             if (accum > 0) {
                 //search for each p's Ld factor in docWeights.bin
-                double l_d = disk_posIndex.getL_d(p.getDocumentId()); 
+                double l_d = disk_posIndex.getL_d(p); 
+                //System.out.println("accum before division for docId: "+ p + " is: " + accum);
+                //System.out.println("Ld: " + l_d); 
                 accum /= l_d;
+                doc_temp.setAccumulator(accum);
+                //System.out.println("final accum for docId: "+ p + " is: " + accum + "\n");
             }
 
             queue.add(postingMap.get(p));
@@ -276,12 +286,22 @@ public class DocumentIndexer {
 
         NewTokenProcessor processor = new NewTokenProcessor();
         Iterable<Document> docs = corpus.getDocuments(); //call registerFileDocumentFactory first?
-        HashMap<String, Integer> tftd = new HashMap<>();
+        
+        StrategyFactory sf = new StrategyFactory();
+        StrategyInterface s1 = sf.execute(rankedOption);
+        
         List<Double> Doc_length = new ArrayList<>();
         Positional_inverted_index index = new Positional_inverted_index();
-
+        double token_count=0;
+        
         // Iterate through the documents, and:
         for (Document d : docs) {
+            File f = new File(path + "\\" + d.getTitle());
+            double Filesize = f.length(); 
+            
+            double doc_tokens=0;
+            double doc_length=0;
+            HashMap<String, Integer> tftd = new HashMap<>();
             // Tokenize the document's content by constructing an EnglishTokenStream around the document's content.
             Reader reader = d.getContent();
             EnglishTokenStream stream = new EnglishTokenStream(reader); //can access tokens through this stream
@@ -307,27 +327,41 @@ public class DocumentIndexer {
                 //we check if token already exists in hashmap or not. 
                 //if it exists, increase its freq by 1 else make a new entry.
                 if (tftd.containsKey(word.get(0))) {
+                    doc_tokens++;
                     int count = tftd.get(word.get(0));
                     tftd.replace(word.get(0), count + 1);
                 } else {
+                    doc_tokens++;
+                    token_count++; //gives total number of tokens.
                     tftd.put(word.get(0), 1);
                 }
 
             }
-            double length = 0;
-            double wdt = 0;
+            //double length = 0;
+            //double wdt = 0;
             //calculate w(d,t)= 1 + ln(tft)
+            double total_tftd=0;
             for (Map.Entry<String, Integer> entry : tftd.entrySet()) {
 
-                wdt = 1 + log(entry.getValue());
+                //wdt = 1 + log(entry.getValue());
 
-                length = length + pow(wdt, 2);
+                //length = length + pow(wdt, 2);
+                total_tftd=total_tftd + entry.getValue();
             }
 
-            Doc_length.add(pow(length, 0.5));
+            //Doc_length.add(pow(length, 0.5));
+            //System.out.println("docId: " + d.getId() + " docTitle: "+ d.getTitle() + " Ld: " + pow(length, 0.5)); 
 
+            double avg_tftd = total_tftd / (double) tftd.size();
+            s1.calculate_wdt(tftd);
+            Doc_length.add(s1.calculate_Ld(new DiskPositionalIndex(),0));
+            Doc_length.add(avg_tftd);
+            Doc_length.add(doc_tokens);
+            Doc_length.add(Filesize);
         }
-
+        Doc_length.add(token_count);
+        System.out.println("Total docs: "+ N);
+        System.out.println("Total tokens:" + token_count);
         DiskIndexWriter d = new DiskIndexWriter();
         d.write_doc(path, Doc_length);
         /*System.out.println("LD: " );

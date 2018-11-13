@@ -26,6 +26,8 @@ public class DiskPositionalIndex implements Index {
 
     private boolean Found = false;
     
+    public DiskPositionalIndex(){}
+    
     public DiskPositionalIndex(String path){
         this.vocTable = new File(path + "\\Index\\VocabTable.bin");
         this.vocab = new File(path + "\\Index\\vocab.bin");
@@ -168,7 +170,7 @@ public class DiskPositionalIndex implements Index {
         RandomAccessFile ram = new RandomAccessFile(docWeights, "r");
         long docid = (long) docId;
         //System.out.println(docid); 
-        ram.seek((docid) * 8);
+        ram.seek((docid) * (8*4));
         //System.out.println(ram.readDouble());
         double L_d = ram.readDouble();
         //System.out.println(L_d); 
@@ -177,6 +179,73 @@ public class DiskPositionalIndex implements Index {
         
         return L_d; 
         
+    }
+    
+    public double getDocLength_D(int docId) throws FileNotFoundException, IOException {
+        //System.out.println(docId); 
+        FileInputStream i = new FileInputStream(docWeights);
+        RandomAccessFile ram = new RandomAccessFile(docWeights, "r");
+        long docid = (long) docId;
+        //System.out.println(docid); 
+        ram.seek((docid) * (8 * 4) + 16); //16 is offset, 4 is to accomodate other items per document
+        //System.out.println(ram.readDouble());
+        double DocLength_D = ram.readDouble();
+        //System.out.println(L_d); 
+        i.close();
+        ram.close();
+
+        return DocLength_D;
+
+    }    
+    
+    public double getDocLength_A() throws FileNotFoundException, IOException {
+        //System.out.println(docId); 
+        FileInputStream i = new FileInputStream(docWeights);
+        RandomAccessFile ram = new RandomAccessFile(docWeights, "r");
+        //System.out.println(docid); 
+        ram.seek(ram.length() - 8); //read last value
+        //System.out.println(ram.readDouble());
+        double DocLength_A = ram.readDouble();
+        //System.out.println(L_d); 
+        i.close();
+        ram.close();
+
+        return DocLength_A;
+
+    }
+    
+    public double getByteSize(int docId) throws FileNotFoundException, IOException {
+        //System.out.println(docId); 
+        FileInputStream i = new FileInputStream(docWeights);
+        RandomAccessFile ram = new RandomAccessFile(docWeights, "r");
+        long docid = (long) docId;
+        //System.out.println(docid); 
+        ram.seek((docid) * (8 * 4) + 24); //24 is offset, 4 is to accomodate other items per document
+        //System.out.println(ram.readDouble());
+        double ByteSize = ram.readDouble();
+        //System.out.println(L_d); 
+        i.close();
+        ram.close();
+
+        return ByteSize;
+
+    }
+    
+    public double getAve(int docId) throws FileNotFoundException, IOException {
+        //System.out.println(docId); 
+        FileInputStream i = new FileInputStream(docWeights);
+        RandomAccessFile ram = new RandomAccessFile(docWeights, "r");
+        long docid = (long) docId;
+        //System.out.println(docid); 
+        ram.seek((docid) * (8 * 4) + 8); //8 is offset, 4 is to accomodate other items per document
+        //System.out.println(ram.readDouble());
+        double ave = ram.readDouble();
+        //System.out.println(L_d); 
+        i.close();
+        ram.close();
+
+        return ave;
+
     }
 
     @Override

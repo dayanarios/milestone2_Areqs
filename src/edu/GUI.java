@@ -83,6 +83,7 @@ public class GUI extends javax.swing.JFrame {
         FeaturesPanel = new javax.swing.JPanel();
         booleanButton = new javax.swing.JRadioButton();
         rankedButton = new javax.swing.JRadioButton();
+        formulaComboBox = new javax.swing.JComboBox<>();
 
         DirectoryDialogBox.setTitle("Select Directory");
         DirectoryDialogBox.setMinimumSize(new java.awt.Dimension(360, 208));
@@ -396,6 +397,13 @@ public class GUI extends javax.swing.JFrame {
             }
         });
 
+        formulaComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Default", "tf-idf", "Okapi BM25", "Wacky" }));
+        formulaComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                formulaComboBoxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout FeaturesPanelLayout = new javax.swing.GroupLayout(FeaturesPanel);
         FeaturesPanel.setLayout(FeaturesPanelLayout);
         FeaturesPanelLayout.setHorizontalGroup(
@@ -405,6 +413,8 @@ public class GUI extends javax.swing.JFrame {
                 .addComponent(booleanButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(rankedButton)
+                .addGap(10, 10, 10)
+                .addComponent(formulaComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         FeaturesPanelLayout.setVerticalGroup(
@@ -413,7 +423,8 @@ public class GUI extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(FeaturesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(booleanButton)
-                    .addComponent(rankedButton))
+                    .addComponent(rankedButton)
+                    .addComponent(formulaComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -570,6 +581,11 @@ public class GUI extends javax.swing.JFrame {
         
     }//GEN-LAST:event_rankedButtonActionPerformed
 
+    private void formulaComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_formulaComboBoxActionPerformed
+        // TODO add your handling code here:
+        DocumentIndexer.rankedOption = formulaComboBox.getSelectedIndex();
+    }//GEN-LAST:event_formulaComboBoxActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -617,6 +633,7 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JFrame docFrame;
     private javax.swing.JPanel docFramePanel;
     private javax.swing.JLabel footnoteLabel;
+    private javax.swing.JComboBox<String> formulaComboBox;
     protected static javax.swing.JOptionPane indexingCorpusMessage;
     private javax.swing.ButtonGroup modeButtonGroup;
     private javax.swing.JRadioButton rankedButton;
